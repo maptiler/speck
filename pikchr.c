@@ -7294,9 +7294,7 @@ static void pik_render(Pik *p, PList *pList){
     p->wSVG = pik_round(p->rScale*w);
     p->hSVG = pik_round(p->rScale*h);
     pikScale = pik_value(p,"scale",5,0);
-    if( pikScale>=0.001 && pikScale<=1000.0
-     && (pikScale<0.99 || pikScale>1.01)
-    ){
+    if( pikScale>=0.001 && pikScale<=1000.0 ){
       p->wSVG = pik_round(p->wSVG*pikScale);
       p->hSVG = pik_round(p->hSVG*pikScale);
       pik_append_num(p, " width=\"", p->wSVG);
@@ -8348,3 +8346,59 @@ int Pikchr_Init(Tcl_Interp *interp){
 
 
 #line 8350 "pikchr.c"
+
+
+#ifdef PIKCHR_LUA
+
+#include <lua.h>
+#include <lauxlib.h>
+
+static int
+lua_pikchr_compile(lua_State *L)
+{
+    const char *code = luaL_checkstring(L, 1);
+
+    int width;
+    int height;
+    char *out;
+
+    out = pikchr(code, "", PIKCHR_PLAINTEXT_ERRORS, &width, &height);
+
+    if (out == NULL) {
+        lua_pushstring(L, "could not allocate memory");
+        lua_error(L);
+        return 0;
+    }
+
+    lua_pushstring(L, out);
+    free(out);
+
+    if (width < 0)
+        return lua_error(L);
+    else
+        return 1;
+}
+
+static int
+lua_pikchr_version(lua_State *L)
+{
+    lua_pushstring(L, pikchr_version());
+    return 1;
+}
+
+static const luaL_Reg lua_pikchr_functions[] = {
+    {"compile", lua_pikchr_compile},
+    {"version", lua_pikchr_version},
+    {NULL, NULL}
+};
+
+int
+luaopen_pikchr(lua_State *L)
+{
+    luaL_newlib(L, lua_pikchr_functions);
+    lua_pushstring(L, "1.0");
+    lua_setfield(L, -2, "_VERSION");
+    return 1;
+}
+
+#endif /* PIKCHR_LUA */
