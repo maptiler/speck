@@ -1,0 +1,15 @@
+name: "SPECK"
+description: "Technical documentation tool"
+inputs:
+  config:
+    description: "Pandoc defaults file"
+    required: true
+  target:
+    description: "Target directory"
+    reqired: true
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.config }}
+    - ${{ inputs.target }}
