@@ -9,7 +9,6 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
-#    --number-sections \
 pandoc \
     --from markdown \
     --to chunkedhtml \
