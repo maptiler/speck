@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="$lang$" xml:lang="$lang$" $if(dir)$ dir="$dir$" $endif$>
+<head>
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+$for(author-meta)$
+<meta name="author" content="$author-meta$" />
+$endfor$
+$if(date-meta)$
+<meta name="dcterms.date" content="$date-meta$" />
+$endif$
+$if(keywords)$
+<meta name="keywords" content="$for(keywords)$$keywords$$sep$, $endfor$" />
+$endif$
+$if(description-meta)$
+<meta name="description" content="$description-meta$" />
+$endif$
+<title>$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap">
+<link rel="stylesheet" href="speck.css" />
+<script src="speck.js" defer></script>
+$if(math)$
+$math$
+$endif$
+</head>
+<body>
+$for(include-before)$
+$include-before$
+$endfor$
+<nav id="navigation">
+<table summary="Navigation header">
+<tr>
+<td width="10%" align="left">
+$if(previous.url)$
+<a accesskey="p" href="$previous.url$" title="$previous.title$">Prev</a>
+$endif$
+</td>
+<td width="10%" align="left">
+$if(up.url)$
+<a accesskey="u" href="$up.url$" title="$up.title$">Up</a>
+$endif$
+</td>
+<td width="60%" align="center">$number$</td>
+<td width="10%" align="right">
+$if(top)$
+<a accesskey="h" href="$top.url$" title="$top.title$">Home</a>
+$endif$
+</td>
+<td width="10%" align="right">
+$if(next.url)$
+<a accesskey="n" href="$next.url$" title="$next.title$">Next</a></td>
+$endif$
+</tr>
+</table>
+<hr />
+</nav>
+$if(top)$
+$-- Only print title block for the home page.
+$else$
+$if(title)$
+<header id="title-block-header">
+<h1 class="title">$title$</h1>
+$if(subtitle)$
+<p class="subtitle">$subtitle$</p>
+$endif$
+$for(author)$
+<p class="author">$author$</p>
+$endfor$
+$if(date)$
+<p class="date">$date$</p>
+$endif$
+$if(version)$
+<p class="version">$version$</p>
+$endif$
+$if(abstract)$
+<div class="abstract">
+<div class="abstract-title">$abstract-title$</div>
+$abstract$
+</div>
+$endif$
+</header>
+$endif$
+$endif$
+$if(toc)$
+<nav id="TOC" role="doc-toc">
+$if(toc-title)$
+<h2 id="toc-title">$toc-title$</h2>
+$endif$
+$table-of-contents$
+</nav>
+$endif$
+$body$
+$for(include-after)$
+$include-after$
+$endfor$
+</body>
+</html>

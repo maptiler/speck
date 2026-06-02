@@ -1,0 +1,27 @@
+#!/bin/bash
+
+BASE=/usr/local/share/speck
+
+if [ $# -ne 2 ]; then
+    echo "Usage: speck CONFIG OUTPUT"
+    echo "CONFIG    Pandoc defaults file"
+    echo "OUTPUT    Target directory"
+    exit 1
+fi
+
+#    --number-sections \
+pandoc \
+    --from markdown \
+    --to chunkedhtml \
+    --standalone \
+    --strip-comments \
+    --table-of-contents \
+    --lua-filter "$BASE/pikchr.lua" \
+    --filter pandoc-crossref \
+    --metadata "crossrefYaml=$BASE/crossref.yaml" \
+    --template "$BASE/speck.html" \
+    --defaults "$1" \
+    --output "$2"
+
+cp "$BASE/speck.js" "$2/speck.js"
+cp "$BASE/speck.css" "$2/speck.css"

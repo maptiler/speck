@@ -1,0 +1,27 @@
+{
+    "name": "SPECK",
+    "dockerFile": "./Dockerfile",
+    "remoteUser": "debian",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "sumneko.lua"
+            ],
+            "settings": {
+                "[lua]": {
+                    "editor.formatOnSave": true
+                },
+                "[markdown]": {
+                    "editor.wordWrap": "wordWrapColumn",
+                    "editor.wordWrapColumn": 100,
+                    "editor.wrappingIndent": "deepIndent",
+                    "editor.quickSuggestions": {
+                        "comments": "off",
+                        "strings": "off",
+                        "other": "off"
+                    }
+                }
+            }
+        }
+    }
+}
