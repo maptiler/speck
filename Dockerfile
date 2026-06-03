@@ -1,6 +1,7 @@
-# This file describes the image used for the GitHub action.
-# It is based on the devcontainer version, but is split into
-# two phases to minimize the size of the image.
+# This file describes the image that is used both for the GitHub action
+# and as the base for VS Code devcontainers in client repositories. It
+# is based on our devcontainer version, but is split into two phases to
+# minimize the size of the image.
 
 # ============================================================================
 
@@ -27,17 +28,20 @@ RUN make -C /usr/local/src/speck all install
 
 FROM debian:forky
 
+# The git dependency is for use in client devcontainers.
 RUN apt update --quiet \
- && apt install --quiet --yes --no-install-recommends pandoc
-        
+ && apt install --quiet --yes --no-install-recommends git pandoc
+
 COPY --from=build /usr/local/lib/lua/5.4/* /usr/local/lib/lua/5.4/
 COPY --from=build /usr/local/share/speck/* /usr/local/share/speck/
 COPY --from=build /usr/local/bin/* /usr/local/bin/
 
 ENTRYPOINT ["/usr/local/bin/speck"]
 
-WORKDIR /github/workspace
+# GitHub actions configure their own working directory,
+# this one is for use in devcontainers.
+WORKDIR /mnt
 
-# For local testing, not used by the action.
+# GitHub actions run as root, this user is for devcontainers.
 RUN groupadd --gid 1000 debian \
  && useradd --uid 1000 --gid 1000 --groups sudo --create-home debian
