@@ -28,9 +28,10 @@ RUN make -C /usr/local/src/speck all install
 
 FROM debian:forky
 
-# The git dependency is for use in client devcontainers.
+# The git dependency is for use in client devcontainers,
+# certificates are required for git.
 RUN apt update --quiet \
- && apt install --quiet --yes --no-install-recommends git pandoc
+ && apt install --quiet --yes --no-install-recommends ca-certificates git pandoc
 
 COPY --from=build /usr/local/lib/lua/5.4/* /usr/local/lib/lua/5.4/
 COPY --from=build /usr/local/share/speck/* /usr/local/share/speck/
