@@ -8,6 +8,7 @@ Inputs:
 
 - `config`
 - `target`
+- `version`
 
 Example:
 
@@ -16,4 +17,5 @@ uses: maptiler/speck@v1
 with:
   config: build.yaml
   target: build
+  version: ${{ github.ref_name }}
 ```
