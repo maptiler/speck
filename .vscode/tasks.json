@@ -1,0 +1,24 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build documentation",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/speck",
+            "args": [
+                "doc/build.yaml",
+                "doc/build"
+            ],
+            "options": {
+                "env": {
+                    "SPECK_BASE": "${workspaceFolder}/src"
+                }
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

@@ -1,0 +1,9 @@
+metadata:
+  lang: en
+  title: MapTiler SPECK
+
+input-files:
+- ${.}/project.md
+- ${.}/environment.md
+- ${.}/goals.md
+- ${.}/system.md
