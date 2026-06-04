@@ -2,6 +2,31 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Build documentation",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/speck",
+            "args": [
+                "doc/build.yaml",
+                "doc/build",
+                "--metadata",
+                {
+                    "value": "version=$(git rev-parse --short HEAD)",
+                    "quoting": "weak"
+                }
+            ],
+            "options": {
+                "env": {
+                    "LUA_CPATH": "${workspaceFolder}/src/?.so;;",
+                    "SPECK_BASE": "${workspaceFolder}/src"
+                }
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "Build Pikchr extension",
             "type": "shell",
             "command": "make",
