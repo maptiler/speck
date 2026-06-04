@@ -15,10 +15,6 @@ RUN apt update --quiet \
         liblua5.4-dev \
         pkg-config
 
-RUN curl -L -o /tmp/pandoc-crossref.tar.xz https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.24a/pandoc-crossref-Linux-X64.tar.xz \
- && tar -xf /tmp/pandoc-crossref.tar.xz -C /usr/local/bin pandoc-crossref \
- && rm /tmp/pandoc-crossref.tar.xz
-
 COPY src/* /usr/local/src/speck/src/
 COPY Makefile /usr/local/src/speck/
 

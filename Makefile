@@ -8,7 +8,7 @@ src/pikchr.so: src/pikchr.c
 
 install:
 	install -D -t /usr/local/lib/lua/5.4/ src/pikchr.so
-	install -D -t /usr/local/share/speck src/speck.html src/speck.js src/speck.css src/crossref.yaml src/pikchr.lua
+	install -D -t /usr/local/share/speck src/speck.html src/speck.js src/speck.css src/speck.lua
 	install -t /usr/local/bin src/speck
 
 clean:

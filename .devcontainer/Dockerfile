@@ -12,11 +12,6 @@ RUN apt update --quiet \
         pandoc \
         pkg-config
 
-# Install pandoc-crossref.
-RUN curl -L -o /tmp/pandoc-crossref.tar.xz https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.24a/pandoc-crossref-Linux-X64.tar.xz \
- && tar -xf /tmp/pandoc-crossref.tar.xz -C /usr/local/bin pandoc-crossref \
- && rm /tmp/pandoc-crossref.tar.xz
-
 # Create local user.
 RUN groupadd --gid 1000 debian \
  && useradd --uid 1000 --gid 1000 --create-home debian

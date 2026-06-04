@@ -35,9 +35,7 @@ pandoc \
     --standalone \
     --strip-comments \
     --table-of-contents \
-    --lua-filter "$SPECK_BASE/pikchr.lua" \
-    --filter pandoc-crossref \
-    --metadata "crossrefYaml=$SPECK_BASE/crossref.yaml" \
+    --lua-filter "$SPECK_BASE/speck.lua" \
     --template "$SPECK_BASE/speck.html" \
     --defaults "$CONFIG" \
     --output "$TARGET" \
