@@ -61,39 +61,41 @@ end
 
 function Context:collect_paragraph(block)
     local first = block.content[1]
-    if not first or first.t ~= "Str" then
-        return
-    end
 
-    -- Extract the paragraph identifier.
-    local para_id = first.text:match("^{#([%w%._-]+)}$")
-    if not para_id then
-        return
+    -- Extract the paragraph identifier, if any.
+    local para_id = nil
+    if first and first.t == "Str" then
+        para_id = first.text:match("^{#([%w%._-]+)}$")
+        if para_id then
+            -- Remove the header text.
+            table.remove(block.content, 1)
+
+            -- Remove blank space at the end of the header line.
+            while #block.content > 0 do
+                local elem = block.content[1]
+                if elem.t == "SoftBreak" or elem.t == "LineBreak" then
+                    table.remove(block.content, 1)
+                else
+                    break
+                end
+            end
+        end
     end
 
     self.para_count = self.para_count + 1
     local para_num = self.para_count
 
-    -- Remove the header text.
-    table.remove(block.content, 1)
-
-    -- Remove blank space at the end of the header line.
-    while #block.content > 0 do
-        local elem = block.content[1]
-        if elem.t == "SoftBreak" or elem.t == "LineBreak" then
-            table.remove(block.content, 1)
-        else
-            break
-        end
-    end
-
-    -- Wrap the paragraph in a div element.
     local div = pandoc.Div({ block })
-    div.identifier = para_id
     div.classes = { "para" }
     div.attributes["num"] = para_num
 
-    self:add_item(div)
+    if para_id then
+        div.identifier = para_id
+        self:add_item(div)
+    else
+        div.identifier = string.format("para-%d", para_num)
+    end
+
     return div
 end
 
@@ -103,6 +105,8 @@ function Context:collect_table(block)
 
     if block.identifier then
         self:add_item(block)
+    else
+        block.identifier = string.format("tab-%d", table_num)
     end
 
     block.attributes["num"] = table_num
@@ -116,6 +120,8 @@ function Context:collect_figure(block)
 
     if block.identifier then
         self:add_item(block)
+    else
+        block.identifier = string.format("fig-%d", figure_num)
     end
 
     block.attributes["num"] = figure_num
