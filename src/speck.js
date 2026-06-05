@@ -17,11 +17,4 @@ document.addEventListener("DOMContentLoaded", function () {
         anchor.ariaHidden = "true";
         elem.appendChild(anchor);
     });
-    document.querySelectorAll(".para").forEach(function (elem) {
-        const anchor = document.createElement("a");
-        anchor.href = `#${elem.id}`;
-        anchor.className = "num";
-        anchor.innerHTML = elem.dataset.num;
-        elem.appendChild(anchor);
-    });
 });
