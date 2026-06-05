@@ -1,6 +1,9 @@
 #!/bin/sh -e
 
-BASE=/usr/local/share/speck
+# Allow the caller to specify where the tool is installed.
+if [ -z "$SPECK_BASE" ]; then
+    SPECK_BASE=/usr/local/share/speck
+fi
 
 if [ $# -lt 2 ]; then
     echo "Usage: speck CONFIG OUTPUT [ARGS...]"
@@ -32,13 +35,13 @@ pandoc \
     --standalone \
     --strip-comments \
     --table-of-contents \
-    --lua-filter "$BASE/pikchr.lua" \
+    --lua-filter "$SPECK_BASE/pikchr.lua" \
     --filter pandoc-crossref \
-    --metadata "crossrefYaml=$BASE/crossref.yaml" \
-    --template "$BASE/speck.html" \
+    --metadata "crossrefYaml=$SPECK_BASE/crossref.yaml" \
+    --template "$SPECK_BASE/speck.html" \
     --defaults "$CONFIG" \
     --output "$TARGET" \
     "$@"
 
-cp "$BASE/speck.js" "$TARGET/speck.js"
-cp "$BASE/speck.css" "$TARGET/speck.css"
+cp "$SPECK_BASE/speck.js" "$TARGET/speck.js"
+cp "$SPECK_BASE/speck.css" "$TARGET/speck.css"

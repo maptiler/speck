@@ -10,11 +10,7 @@ RUN apt update --quiet \
         git \
         liblua5.4-dev \
         pandoc \
-        pkg-config \
-        sudo
-
-# Enable sudo so that we can install the package.
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+        pkg-config
 
 # Install pandoc-crossref.
 RUN curl -L -o /tmp/pandoc-crossref.tar.xz https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.24a/pandoc-crossref-Linux-X64.tar.xz \
@@ -23,4 +19,4 @@ RUN curl -L -o /tmp/pandoc-crossref.tar.xz https://github.com/lierdakil/pandoc-c
 
 # Create local user.
 RUN groupadd --gid 1000 debian \
- && useradd --uid 1000 --gid 1000 --groups sudo --create-home debian
+ && useradd --uid 1000 --gid 1000 --create-home debian

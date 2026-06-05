@@ -45,4 +45,4 @@ WORKDIR /mnt
 
 # GitHub actions run as root, this user is for devcontainers.
 RUN groupadd --gid 1000 debian \
- && useradd --uid 1000 --gid 1000 --groups sudo --create-home debian
+ && useradd --uid 1000 --gid 1000 --create-home debian
