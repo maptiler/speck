@@ -232,8 +232,8 @@ div.para {
 
 div.para a.num {
     position: absolute;
-    width: 3em;
-    left: -4em;
+    width: 5em;
+    left: -6em;
     top: 0;
     text-align: right;
     text-decoration: none;
