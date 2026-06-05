@@ -191,8 +191,6 @@ function Context:resolve_references(cite)
             elseif item.t == "Figure" then
                 table.insert(result, pandoc.Str("figure"))
                 table.insert(result, pandoc.Space())
-            else
-                assert(item.t == "Para")
             end
             content = { pandoc.Str(item.attributes["num"]) }
         end
