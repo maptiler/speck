@@ -7,6 +7,7 @@ Context.__index = Context
 function Context:new()
     self = setmetatable({}, Context)
     self.items = {}
+    self.backrefs = {}
     self.para_count = 0
     self.table_count = 0
     self.figure_count = 0
@@ -21,6 +22,7 @@ function Context:run(doc)
             end
         end
     }
+
     doc = doc:walk {
         Header = function(block)
             self:add_item(block)
@@ -35,11 +37,23 @@ function Context:run(doc)
             return self:collect_figure(block)
         end
     }
+
+    for i, block in ipairs(doc.blocks) do
+        doc.blocks[i] = pandoc.walk_block(block, {
+            Cite = function(elem)
+                return self:resolve_references(elem, block)
+            end
+        })
+    end
+
     doc = doc:walk {
-        Cite = function(elem)
-            return self:resolve_references(elem)
+        Div = function(block)
+            if block.classes:includes("para") then
+                return self:trace_backrefs(block)
+            end
         end
     }
+
     return doc
 end
 
@@ -96,6 +110,10 @@ function Context:collect_paragraph(block)
         div.identifier = string.format("para-%d", para_num)
     end
 
+    local link = pandoc.Link({ pandoc.Str(para_num) }, string.format("#%s", div.identifier))
+    link.classes = { "num" }
+    table.insert(div.content, link)
+
     return div
 end
 
@@ -138,7 +156,7 @@ function Context:add_item(item)
     end
 end
 
-function Context:resolve_references(cite)
+function Context:resolve_references(cite, block)
     local items = {}
     local result = {}
     local unknown = 0
@@ -209,6 +227,14 @@ function Context:resolve_references(cite)
                 table.insert(result, inline)
             end
         end
+
+        local refs = self.backrefs[item.identifier]
+        if not refs then
+            refs = {}
+            self.backrefs[item.identifier] = refs
+        end
+
+        table.insert(refs, block)
     end
 
     if parenthesize then
@@ -216,6 +242,32 @@ function Context:resolve_references(cite)
     end
 
     return result
+end
+
+function Context:trace_backrefs(block)
+    local refs = self.backrefs[block.identifier]
+    if not refs then
+        return
+    end
+
+    local content = {}
+    for i, item in ipairs(refs) do
+        if i > 1 then
+            table.insert(content, pandoc.Str(","))
+            table.insert(content, pandoc.Space())
+        end
+
+        local link = pandoc.Link(
+            pandoc.Str(item.attributes["num"]),
+            string.format("#%s", item.identifier)
+        )
+        table.insert(content, link)
+    end
+
+    local span = pandoc.Span(content)
+    span.classes = { "backrefs" }
+    table.insert(block.content, span)
+    return block
 end
 
 function Pandoc(doc)
