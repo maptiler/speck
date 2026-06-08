@@ -15,8 +15,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v4
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
         id: push
@@ -25,4 +25,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: maptiler/speck:latest
+          tags: "maptiler/speck:latest,maptiler/speck:${{ github.event.release.tag_name }}"
