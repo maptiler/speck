@@ -245,6 +245,10 @@ div.para span.backrefs {
     top: 0;
 }
 
+span.term {
+    font-weight: bold;
+}
+
 a.anchor {
     text-decoration: none;
     opacity: 0;
