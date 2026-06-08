@@ -35,6 +35,11 @@ function Context:run(doc)
         end,
         Figure = function(block)
             return self:collect_figure(block)
+        end,
+        Span = function(inline)
+            if inline.classes:includes("term") then
+                self:add_item(inline)
+            end
         end
     }
 
@@ -100,7 +105,7 @@ function Context:collect_paragraph(block)
     local para_num = self.para_count
 
     local div = pandoc.Div({ block })
-    div.classes = { "para" }
+    div.classes = pandoc.List { "para" }
     div.attributes["num"] = para_num
 
     if para_id then
@@ -111,7 +116,7 @@ function Context:collect_paragraph(block)
     end
 
     local link = pandoc.Link({ pandoc.Str(para_num) }, string.format("#%s", div.identifier))
-    link.classes = { "num" }
+    link.classes = pandoc.List { "num" }
     table.insert(div.content, link)
 
     return div
@@ -203,24 +208,31 @@ function Context:resolve_references(cite, block)
             table.insert(result, pandoc.Space())
         end
 
-        local content
         if item.t == "Header" then
+            local link = pandoc.Link(item.content, "#" .. item.identifier)
             table.insert(result, pandoc.Str("section"))
             table.insert(result, pandoc.Space())
-            content = item.content
-        else
-            if item.t == "Table" then
-                table.insert(result, pandoc.Str("table"))
-                table.insert(result, pandoc.Space())
-            elseif item.t == "Figure" then
-                table.insert(result, pandoc.Str("figure"))
-                table.insert(result, pandoc.Space())
+            table.insert(result, link)
+        elseif item.t == "Table" then
+            local link = pandoc.Link({ pandoc.Str(item.attributes["num"]) }, "#" .. item.identifier)
+            table.insert(result, pandoc.Str("table"))
+            table.insert(result, pandoc.Space())
+            table.insert(result, link)
+        elseif item.t == "Figure" then
+            local link = pandoc.Link({ pandoc.Str(item.attributes["num"]) }, "#" .. item.identifier)
+            table.insert(result, pandoc.Str("figure"))
+            table.insert(result, pandoc.Space())
+            table.insert(result, link)
+        elseif item.t == "Div" and item.classes:includes("para") then
+            local link = pandoc.Link({ pandoc.Str(item.attributes["num"]) }, "#" .. item.identifier)
+            table.insert(result, link)
+        elseif item.t == "Span" and item.classes:includes("term") then
+            for __, inline in ipairs(item.content) do
+                table.insert(result, inline)
             end
-            content = { pandoc.Str(item.attributes["num"]) }
+        else
+            error("Reference to invalid element type: " .. item.t)
         end
-
-        local link = pandoc.Link(content, "#" .. item.identifier)
-        table.insert(result, link)
 
         if #citation.suffix > 0 then
             for __, inline in ipairs(citation.suffix) do
@@ -265,7 +277,7 @@ function Context:trace_backrefs(block)
     end
 
     local span = pandoc.Span(content)
-    span.classes = { "backrefs" }
+    span.classes = pandoc.List { "backrefs" }
     table.insert(block.content, span)
     return block
 end
