@@ -6,7 +6,10 @@ inputs:
     required: true
   target:
     description: "Target directory"
-    reqired: true
+    required: true
+  version:
+    description: "Version identifier"
+    required: true
 runs:
   using: docker
   image: Dockerfile
@@ -14,4 +17,4 @@ runs:
     - ${{ inputs.config }}
     - ${{ inputs.target }}
     - "--metadata"
-    - "version=${{ github.ref_name }}"
+    - "version=${{ inputs.version }}"
