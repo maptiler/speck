@@ -30,6 +30,16 @@ svg {
     max-width: 100%;
 }
 
+figure {
+    margin: 1em 0;
+    text-align: center;
+}
+
+figure img,
+figure svg {
+    padding: 1.5em 0;
+}
+
 figure img,
 figure svg {
     padding: 25px;
@@ -265,10 +275,6 @@ h6:hover .anchor,
 table caption:hover .anchor,
 figcaption:hover .anchor {
     opacity: 1;
-}
-
-figure {
-    text-align: center;
 }
 
 .info p {
