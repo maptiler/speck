@@ -262,21 +262,6 @@ figcaption:hover .anchor {
     opacity: 1;
 }
 
-.info p {
-    padding: 0.5em 2em 0.5em 2em;
-    background-color: #eef4ff;
-}
-
-.note p {
-    padding: 0.5em 2em 0.5em 2em;
-    background-color: #ffeeff;
-}
-
-.warning p {
-    padding: 0.5em 2em 0.5em 2em;
-    background-color: #fce9c0;
-}
-
 .wide {
     position: relative;
     width: 60em;
