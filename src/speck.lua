@@ -20,6 +20,11 @@ function Context:run(doc)
             if block.classes:includes("pic") then
                 return self:process_pic(block)
             end
+        end,
+        Table = function(block)
+            if block.attributes["ratio"] ~= nil then
+                return self:process_table(block)
+            end
         end
     }
 
@@ -76,6 +81,25 @@ function Context:process_pic(block)
     end
 
     return figure
+end
+
+function Context:process_table(block)
+    local widths = {}
+    local total = 0
+    for value in block.attributes["ratio"]:gmatch("([^,]+)") do
+        local width = tonumber(value)
+        table.insert(widths, width)
+        total = total + width
+    end
+
+    local specs = {}
+    for i, spec in ipairs(block.colspecs) do
+        table.insert(specs, { spec[1], widths[i] / total })
+    end
+
+    block.attributes["ratio"] = nil
+    block.colspecs = specs
+    return block
 end
 
 function Context:collect_paragraph(block)
