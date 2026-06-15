@@ -75,6 +75,10 @@ function Context:process_pic(block)
         figure.identifier = block.identifier
     end
 
+    if block.classes:includes("wide") then
+        table.insert(figure.classes, "wide")
+    end
+
     local caption = block.attributes["caption"]
     if caption then
         figure.caption = pandoc.Caption({ caption })

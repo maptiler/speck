@@ -27,7 +27,6 @@ img {
 
 svg {
     height: auto;
-    max-width: 100%;
 }
 
 figure {
@@ -38,11 +37,6 @@ figure {
 figure img,
 figure svg {
     padding: 1.5em 0;
-}
-
-figure img,
-figure svg {
-    padding: 25px;
 }
 
 h1,
@@ -130,15 +124,6 @@ table {
 
 table.align-top td {
     vertical-align: top;
-}
-
-table.wide {
-    display: table;
-    table-layout: fixed;
-    position: relative;
-    width: 60em;
-    left: 50%;
-    transform: translateX(-50%);
 }
 
 table caption {
@@ -290,4 +275,11 @@ figcaption:hover .anchor {
 .warning p {
     padding: 0.5em 2em 0.5em 2em;
     background-color: #fce9c0;
+}
+
+.wide {
+    position: relative;
+    width: 60em;
+    left: 50%;
+    transform: translateX(-50%);
 }
