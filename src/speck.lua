@@ -32,9 +32,6 @@ function Context:run(doc)
         Header = function(block)
             self:add_item(block)
         end,
-        Para = function(block)
-            return self:collect_paragraph(block)
-        end,
         Table = function(block)
             return self:collect_table(block)
         end,
@@ -47,6 +44,14 @@ function Context:run(doc)
             end
         end
     }
+
+    -- We only want to collect paragraphs at the top level,
+    -- not withing admonitions, block quotes, etc.
+    for i, block in ipairs(doc.blocks) do
+        if block.t == "Para" then
+            doc.blocks[i] = self:collect_paragraph(block)
+        end
+    end
 
     for i, block in ipairs(doc.blocks) do
         doc.blocks[i] = pandoc.walk_block(block, {
