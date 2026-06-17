@@ -268,3 +268,28 @@ figcaption:hover .anchor {
     left: 50%;
     transform: translateX(-50%);
 }
+
+.admonition {
+    margin: 1em 0;
+    padding: 0.5em 2em;
+}
+
+.admonition p {
+    margin: 0;
+}
+
+.admonition p+p {
+    margin-top: 1em;
+}
+
+.admonition.info {
+    background-color: hsl(220, 100%, 94%);
+}
+
+.admonition.note {
+    background-color: hsl(300, 100%, 95%);
+}
+
+.admonition.warning {
+    background-color: hsl(40, 100%, 90%);
+}

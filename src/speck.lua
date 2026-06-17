@@ -25,7 +25,10 @@ function Context:run(doc)
             if block.attributes["ratio"] ~= nil then
                 return self:process_table(block)
             end
-        end
+        end,
+        Div = function(block)
+            return self:process_div(block)
+        end,
     }
 
     doc = doc:walk {
@@ -109,6 +112,16 @@ function Context:process_table(block)
     block.attributes["ratio"] = nil
     block.colspecs = specs
     return block
+end
+
+function Context:process_div(block)
+    if block.classes:includes("note")
+        or block.classes:includes("info")
+        or block.classes:includes("warning")
+    then
+        block.classes:insert("admonition")
+        return block
+    end
 end
 
 function Context:collect_paragraph(block)
