@@ -224,12 +224,20 @@ div.para {
     line-height: 1.5em;
 }
 
-div.para {
-    /* So that we can position `a.num` absolutely. */
+div.para strong {
+    font-weight: normal;
+    text-decoration: underline;
+    text-decoration-color: #999999;
+}
+
+div.para,
+div.para dt,
+div.para dd {
+    /* So that we can position `a.para` and `span.backrefs` absolutely. */
     position: relative;
 }
 
-div.para a.num {
+div.para a.para {
     position: absolute;
     width: 5em;
     left: -6em;
@@ -244,6 +252,34 @@ div.para span.backrefs {
     left: 43em;
     top: 0;
     font-variant-numeric: tabular-nums;
+}
+
+div.item a.item {
+    font-variant-numeric: tabular-nums;
+}
+
+div.card {
+    border-top: 1px solid #999999;
+    border-bottom: 1px solid #999999;
+}
+
+div.card+div.card {
+    border-top: none;
+}
+
+div.card dt {
+    margin-top: 0.5em;
+    font-weight: bold;
+}
+
+div.card dd {
+    margin: 0;
+}
+
+div.card ul,
+div.card ol {
+    margin: 0;
+    padding-left: 3em;
 }
 
 span.term {

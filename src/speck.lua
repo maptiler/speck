@@ -6,7 +6,7 @@ Context.__index = Context
 
 function Context:new()
     self = setmetatable({}, Context)
-    self.items = {}
+    self.elements = {}
     self.backrefs = {}
     self.para_count = 0
     self.table_count = 0
@@ -33,7 +33,7 @@ function Context:run(doc)
 
     doc = doc:walk {
         Header = function(block)
-            self:add_item(block)
+            self:add_element(block)
         end,
         Table = function(block)
             return self:collect_table(block)
@@ -43,31 +43,33 @@ function Context:run(doc)
         end,
         Span = function(inline)
             if inline.classes:includes("term") then
-                self:add_item(inline)
+                self:add_element(inline)
             end
         end
     }
 
     -- We only want to collect paragraphs at the top level,
-    -- not withing admonitions, block quotes, etc.
+    -- not within admonitions, block quotes, etc.
     for i, block in ipairs(doc.blocks) do
         if block.t == "Para" then
             doc.blocks[i] = self:collect_paragraph(block)
+        elseif block.t == "Div" and #block.classes == 0 then
+            self:collect_card(block)
         end
     end
 
     for i, block in ipairs(doc.blocks) do
-        doc.blocks[i] = pandoc.walk_block(block, {
+        doc.blocks[i] = block:walk {
             Cite = function(elem)
                 return self:resolve_references(elem, block)
             end
-        })
+        }
     end
 
     doc = doc:walk {
-        Div = function(block)
-            if block.classes:includes("para") then
-                return self:trace_backrefs(block)
+        Span = function(span)
+            if span.classes:includes("backrefs") then
+                return self:trace_backrefs(span)
             end
         end
     }
@@ -130,7 +132,7 @@ function Context:collect_paragraph(block)
     -- Extract the paragraph identifier, if any.
     local para_id = nil
     if first and first.t == "Str" then
-        para_id = first.text:match("^{#([%w%._-]+)}$")
+        para_id = first.text:match("^{#([%w-]+)}$")
         if para_id then
             -- Remove the header text.
             table.remove(block.content, 1)
@@ -152,20 +154,112 @@ function Context:collect_paragraph(block)
 
     local div = pandoc.Div({ block })
     div.classes = pandoc.List { "para" }
-    div.attributes["num"] = para_num
+    div.attributes["num"] = tostring(para_num)
 
     if para_id then
         div.identifier = para_id
-        self:add_item(div)
+        self:add_element(div)
     else
         div.identifier = string.format("para-%d", para_num)
     end
 
-    local link = pandoc.Link({ pandoc.Str(para_num) }, string.format("#%s", div.identifier))
-    link.classes = pandoc.List { "num" }
-    table.insert(div.content, link)
+    local ref = pandoc.Link({ pandoc.Str(para_num) }, string.format("#%s", div.identifier))
+    ref.classes = pandoc.List { "para" }
+    table.insert(div.content, ref)
+
+    local backrefs = pandoc.Span({})
+    backrefs.identifier = para_id
+    backrefs.classes = pandoc.List { "backrefs" }
+    table.insert(div.content, backrefs)
 
     return div
+end
+
+function Context:collect_card(block)
+    local definition_list = block.content[1]
+    if definition_list == nil or definition_list.t ~= "DefinitionList" then
+        return
+    end
+
+    self.para_count = self.para_count + 1
+    local para_num = self.para_count
+
+    if not block.identifier then
+        block.identifier = string.format("para-%d", para_num)
+    end
+
+    block.classes:insert("card")
+    block.classes:insert("para")
+    block.attributes = { num = tostring(para_num) }
+    self:add_element(block)
+
+    local n = 0
+    for i, definition_item in ipairs(definition_list.content) do
+        if i == 1 then
+            local headline = definition_item[2][1]
+
+            local ref = pandoc.Link({ pandoc.Str(para_num) }, string.format("#%s", block.identifier))
+            ref.classes = pandoc.List { "para" }
+            table.insert(headline, ref)
+
+            local backrefs = pandoc.Span({})
+            backrefs.identifier = block.identifier
+            backrefs.classes = pandoc.List { "backrefs" }
+            table.insert(headline, backrefs)
+        else
+            local definitions = definition_item[2]
+
+            for j, definition in ipairs(definitions) do
+                n = n + 1
+
+                -- Extract the item identifier, if any.
+                local local_id = nil
+                local first = definition[1]
+                if first ~= nil and first.t == "Plain" then
+                    local elem = first.content[1]
+                    if elem and elem.t == "Str" then
+                        local_id = elem.text:match("^{#([%w-]+)}$")
+                        if local_id then
+                            -- Remove the header text.
+                            table.remove(first.content, 1)
+
+                            -- Remove blank space at the end of the header line.
+                            while #first.content > 0 do
+                                elem = first.content[1]
+                                if elem.t == "SoftBreak" or elem.t == "LineBreak" then
+                                    table.remove(first.content, 1)
+                                else
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+
+                local div = pandoc.Div(definition)
+                div.classes = pandoc.List { "item" }
+                div.attributes = { num = string.format("%d.%d", para_num, n) }
+
+                if local_id ~= nil then
+                    div.identifier = string.format("%s.%s", block.identifier, local_id)
+                    self:add_element(div)
+                else
+                    div.identifier = string.format("%s.%s", block.identifier, n)
+                end
+
+                local ref = pandoc.Link({ pandoc.Str(string.format("%d.", n)) }, "#" .. div.identifier)
+                ref.classes = pandoc.List { "item" }
+                table.insert(div.content, 1, ref)
+
+                local backrefs = pandoc.Span({})
+                backrefs.identifier = div.identifier
+                backrefs.classes = pandoc.List { "backrefs" }
+                table.insert(div.content, backrefs)
+
+                definitions[j] = { div }
+            end
+        end
+    end
 end
 
 function Context:collect_table(block)
@@ -173,7 +267,7 @@ function Context:collect_table(block)
     local table_num = self.table_count
 
     if block.identifier then
-        self:add_item(block)
+        self:add_element(block)
     else
         block.identifier = string.format("tab-%d", table_num)
     end
@@ -188,7 +282,7 @@ function Context:collect_figure(block)
     local figure_num = self.figure_count
 
     if block.identifier then
-        self:add_item(block)
+        self:add_element(block)
     else
         block.identifier = string.format("fig-%d", figure_num)
     end
@@ -198,134 +292,167 @@ function Context:collect_figure(block)
     return block
 end
 
-function Context:add_item(item)
-    assert(item.identifier)
-    if self.items[item.identifier] then
-        error("Duplicate item: " .. item.identifier)
+function Context:add_element(element)
+    assert(element.identifier)
+    if self.elements[element.identifier] then
+        error("Duplicate element: " .. element.identifier)
     else
-        self.items[item.identifier] = item
+        self.elements[element.identifier] = element
     end
 end
 
 function Context:resolve_references(cite, block)
-    local items = {}
     local result = {}
-    local unknown = 0
+    local unknown = {}
     local parenthesize = true
 
-    for __, citation in ipairs(cite.citations) do
-        local item = self.items[citation.id]
-        table.insert(items, item)
-
-        if not item then
-            unknown = unknown + 1
-        end
-
+    for i, citation in ipairs(cite.citations) do
         if citation.mode == "AuthorInText" then
             parenthesize = false
         end
-    end
 
-    -- If all references are uknown, leave the element as it was.
-    -- There might be other filters that will resolve it.
-    if #cite.citations == unknown then
-        return
-    end
+        local element_id
+        local item_id = citation.id:match("^self%.([%w-]+)$")
 
-    if parenthesize then
-        table.insert(result, pandoc.Str("("))
-    end
-
-    for i, citation in ipairs(cite.citations) do
-        local item = items[i]
-        if not item then
-            error("Invalid citation: " .. citation.id)
-        end
-
-        if i > 1 then
-            table.insert(result, pandoc.Str(","))
-            table.insert(result, pandoc.Space())
-        end
-
-        if #citation.prefix > 0 then
-            for __, inline in ipairs(citation.prefix) do
-                table.insert(result, inline)
-            end
-            table.insert(result, pandoc.Space())
-        end
-
-        if item.t == "Header" then
-            local link = pandoc.Link(item.content, "#" .. item.identifier)
-            table.insert(result, pandoc.Str("section"))
-            table.insert(result, pandoc.Space())
-            table.insert(result, link)
-        elseif item.t == "Table" then
-            local link = pandoc.Link({ pandoc.Str(item.attributes["num"]) }, "#" .. item.identifier)
-            table.insert(result, pandoc.Str("table"))
-            table.insert(result, pandoc.Space())
-            table.insert(result, link)
-        elseif item.t == "Figure" then
-            local link = pandoc.Link({ pandoc.Str(item.attributes["num"]) }, "#" .. item.identifier)
-            table.insert(result, pandoc.Str("figure"))
-            table.insert(result, pandoc.Space())
-            table.insert(result, link)
-        elseif item.t == "Div" and item.classes:includes("para") then
-            local link = pandoc.Link({ pandoc.Str(item.attributes["num"]) }, "#" .. item.identifier)
-            table.insert(result, link)
-        elseif item.t == "Span" and item.classes:includes("term") then
-            for __, inline in ipairs(item.content) do
-                table.insert(result, inline)
-            end
+        if item_id then
+            element_id = string.format("%s.%s", block.identifier, item_id)
         else
-            error("Reference to invalid element type: " .. item.t)
+            element_id = citation.id
         end
 
-        if #citation.suffix > 0 then
-            for __, inline in ipairs(citation.suffix) do
-                table.insert(result, inline)
+        local element = self.elements[element_id]
+        if element == nil then
+            table.insert(unknown, citation)
+        else
+            if i > 1 then
+                table.insert(result, pandoc.Str(","))
+                table.insert(result, pandoc.Space())
+            end
+
+            if #citation.prefix > 0 then
+                for __, inline in ipairs(citation.prefix) do
+                    table.insert(result, inline)
+                end
+                table.insert(result, pandoc.Space())
+            end
+
+            if element.t == "Header" then
+                local link = pandoc.Link(element.content, "#" .. element.identifier)
+                table.insert(result, pandoc.Str("section"))
+                table.insert(result, pandoc.Space())
+                table.insert(result, link)
+            elseif element.t == "Table" then
+                local link = pandoc.Link({ pandoc.Str(element.attributes["num"]) }, "#" .. element.identifier)
+                table.insert(result, pandoc.Str("table"))
+                table.insert(result, pandoc.Space())
+                table.insert(result, link)
+            elseif element.t == "Figure" then
+                local link = pandoc.Link({ pandoc.Str(element.attributes["num"]) }, "#" .. element.identifier)
+                table.insert(result, pandoc.Str("figure"))
+                table.insert(result, pandoc.Space())
+                table.insert(result, link)
+            elseif element.t == "Div" then
+                local text
+                if item_id then
+                    local item_num = element.attributes["num"]:sub(#block.attributes["num"] + 2)
+                    text = { pandoc.RawInline("html", "&bull;"), pandoc.Str(item_num) }
+                else
+                    text = { pandoc.Str(element.attributes["num"]) }
+                end
+                local link = pandoc.Link(text, "#" .. element.identifier)
+                table.insert(result, link)
+            elseif element.t == "Span" then
+                for __, inline in ipairs(element.content) do
+                    table.insert(result, inline)
+                end
+            else
+                error("Reference to invalid element type: " .. element.t)
+            end
+
+            if #citation.suffix > 0 then
+                for __, inline in ipairs(citation.suffix) do
+                    table.insert(result, inline)
+                end
+            end
+
+            local refs = self.backrefs[element_id]
+            if not refs then
+                refs = {}
+                self.backrefs[element_id] = refs
+            end
+
+            local ref_num
+            if item_id then
+                ref_num = 0
+            else
+                ref_num = tonumber(block.attributes["num"])
+                assert(ref_num ~= nil)
+            end
+
+            if refs[ref_num] == nil then
+                refs[ref_num] = block
             end
         end
+    end
 
-        local refs = self.backrefs[item.identifier]
-        if not refs then
-            refs = {}
-            self.backrefs[item.identifier] = refs
+    if #unknown > 0 then
+        -- If all references are uknown, leave the element as it was.
+        -- There might be other filters that will resolve it.
+        if #unknown == #cite.citations then
+            return
+        else
+            error("Invalid cite element")
         end
-
-        table.insert(refs, block)
     end
 
     if parenthesize then
+        table.insert(result, 1, pandoc.Str("("))
         table.insert(result, pandoc.Str(")"))
     end
 
     return result
 end
 
-function Context:trace_backrefs(block)
-    local refs = self.backrefs[block.identifier]
-    if not refs then
-        return
+function Context:trace_backrefs(span)
+    local refs = self.backrefs[span.identifier]
+
+    -- The spans were created for all possible reference targets.
+    -- Most of them will not have been targeted, so we remove their
+    -- spans to save space in the output.
+    if refs == nil then
+        return {}
     end
 
-    local content = {}
-    for i, item in ipairs(refs) do
+    local ref_nums = {}
+    for ref_num in pairs(refs) do
+        table.insert(ref_nums, ref_num)
+    end
+
+    table.sort(ref_nums)
+
+    for i, ref_num in ipairs(ref_nums) do
+        local element = refs[ref_num]
+
         if i > 1 then
-            table.insert(content, pandoc.Str(","))
-            table.insert(content, pandoc.Space())
+            table.insert(span.content, pandoc.Str(","))
+            table.insert(span.content, pandoc.Space())
         end
 
-        local link = pandoc.Link(
-            pandoc.Str(item.attributes["num"]),
-            string.format("#%s", item.identifier)
-        )
-        table.insert(content, link)
+        local text
+        if ref_num == 0 then
+            text = pandoc.RawInline("html", "&bull;")
+        else
+            text = pandoc.Str(element.attributes["num"])
+        end
+
+        local link = pandoc.Link(text, string.format("#%s", element.identifier))
+        table.insert(span.content, link)
     end
 
-    local span = pandoc.Span(content)
-    span.classes = pandoc.List { "backrefs" }
-    table.insert(block.content, span)
-    return block
+    -- The identifier is used only to get the list of references.
+    -- We don't need it in the output, so we remove it here.
+    span.identifier = ""
+    return span
 end
 
 function Pandoc(doc)
