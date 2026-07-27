@@ -30,7 +30,7 @@ if [ -e "$TARGET" ]; then
 fi
 
 pandoc \
-    --from markdown \
+    --from markdown+mark \
     --to chunkedhtml \
     --standalone \
     --strip-comments \
