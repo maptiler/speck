@@ -282,10 +282,6 @@ div.card ol {
     padding-left: 3em;
 }
 
-span.term {
-    font-weight: bold;
-}
-
 a.anchor {
     text-decoration: none;
     opacity: 0;

@@ -41,11 +41,6 @@ function Context:run(doc)
         Figure = function(block)
             return self:collect_figure(block)
         end,
-        Span = function(inline)
-            if inline.classes:includes("term") then
-                self:add_element(inline)
-            end
-        end
     }
 
     -- We only want to collect paragraphs at the top level,
@@ -361,10 +356,6 @@ function Context:resolve_references(cite, block)
                 end
                 local link = pandoc.Link(text, "#" .. element.identifier)
                 table.insert(result, link)
-            elseif element.t == "Span" then
-                for __, inline in ipairs(element.content) do
-                    table.insert(result, inline)
-                end
             else
                 error("Reference to invalid element type: " .. element.t)
             end
