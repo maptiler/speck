@@ -171,9 +171,22 @@ function Context:collect_paragraph(block)
 end
 
 function Context:collect_card(block)
-    local definition_list = block.content[1]
-    if definition_list == nil or definition_list.t ~= "DefinitionList" then
+    local definition_list
+    local first_block = block.content[1]
+
+    -- Detect whether there is a definition list.
+    -- Allow card name without any definitions.
+    if first_block == nil then
         return
+    elseif first_block.t == "DefinitionList" then
+        definition_list = first_block
+    elseif first_block.t == "Para" then
+        definition_list = block.content[2]
+        if definition_list == nil or definition_list.t ~= "DefinitionList" then
+            return
+        end
+        table.remove(block.content, 1)
+        table.insert(definition_list.content, 1, { first_block.content, {} })
     end
 
     self.para_count = self.para_count + 1
@@ -191,25 +204,29 @@ function Context:collect_card(block)
     local n = 0
     for i, definition_item in ipairs(definition_list.content) do
         if i == 1 then
-            local headline = definition_item[2][1]
+            local term = definition_item[1]
 
             local ref = pandoc.Link({ pandoc.Str(para_num) }, string.format("#%s", block.identifier))
             ref.classes = pandoc.List { "para" }
-            table.insert(headline, ref)
+            table.insert(term, ref)
 
             local backrefs = pandoc.Span({})
             backrefs.identifier = block.identifier
             backrefs.classes = pandoc.List { "backrefs" }
-            table.insert(headline, backrefs)
-        else
-            local definitions = definition_item[2]
+            table.insert(term, backrefs)
+        end
 
+        -- Do not number the first item. It should only contain the
+        -- name and some metadata.
+        if i > 1 or first_block.t == "Para" then
+            local definitions = definition_item[2]
             for j, definition in ipairs(definitions) do
                 n = n + 1
 
-                -- Extract the item identifier, if any.
                 local local_id = nil
                 local first = definition[1]
+
+                -- Extract the item identifier, if any.
                 if first ~= nil and first.t == "Plain" then
                     local elem = first.content[1]
                     if elem and elem.t == "Str" then

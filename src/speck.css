@@ -244,6 +244,7 @@ div.para a.para {
     top: 0;
     text-align: right;
     font-variant-numeric: tabular-nums;
+    font-weight: normal;
 }
 
 div.para span.backrefs {
@@ -252,6 +253,7 @@ div.para span.backrefs {
     left: 43em;
     top: 0;
     font-variant-numeric: tabular-nums;
+    font-weight: normal;
 }
 
 div.item a.item {
@@ -265,6 +267,10 @@ div.card {
 
 div.card+div.card {
     border-top: none;
+}
+
+div.card dl {
+    margin: 0.5em 0;
 }
 
 div.card dt {
