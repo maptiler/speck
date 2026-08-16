@@ -13,7 +13,7 @@ Inputs:
 Example:
 
 ```yaml
-uses: maptiler/speck@v1.5
+uses: maptiler/speck@v1.6
 with:
   config: build.yaml
   target: build
