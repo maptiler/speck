@@ -1,0 +1,23 @@
+#!/bin/sh -e
+
+# Prepare a Docker image identical to the one used by VS Code.
+# The build cache should ensure that actually building it won't
+# usually be required.
+docker build \
+    --tag maptiler/speck:jail \
+    --file .devcontainer/Dockerfile \
+    --target jail \
+    .devcontainer
+
+exec docker run \
+    --rm \
+    --interactive \
+    --tty \
+    --user debian \
+    --volume "${HOME}/.claude.json":/home/debian/.claude.json \
+    --volume "${HOME}/.claude/.credentials.json":/home/debian/.claude/.credentials.json \
+    --volume "$(pwd)":/workspaces/speck \
+    --workdir /workspaces/speck \
+    --hostname speck-jail \
+    maptiler/speck:jail \
+    bash

@@ -1,6 +1,9 @@
 {
     "name": "SPECK",
-    "dockerFile": "./Dockerfile",
+    "build": {
+        "dockerfile": "./Dockerfile",
+        "target": "base"
+    },
     "remoteUser": "debian",
     "customizations": {
         "vscode": {
