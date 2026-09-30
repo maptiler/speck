@@ -14,4 +14,8 @@ RUN apt update --quiet \
 
 # Create local user.
 RUN groupadd --gid 1000 debian \
- && useradd --uid 1000 --gid 1000 --create-home debian
+ && useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash debian
+
+# Create Claude configuration directory under the correct user.
+RUN mkdir /home/debian/.claude \
+ && chown debian:debian /home/debian/.claude
