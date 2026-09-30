@@ -219,73 +219,66 @@ dd>ul {
 p,
 li,
 blockquote,
-dd,
-div.para {
+dd {
     line-height: 1.5em;
 }
 
-div.para strong {
-    font-weight: normal;
-    text-decoration: underline;
-    text-decoration-color: #999999;
-}
-
-div.para,
-div.para dt,
-div.para dd {
-    /* So that we can position `a.para` and `span.backrefs` absolutely. */
+/* Labels share a column sized to the widest one, so that the text of all items is aligned.
+   The minimum width keeps the text aligned across blocks whose labels are all shorter. */
+div.speck {
+    /* So that we can position item numbers and back references in the margins. */
     position: relative;
-}
-
-div.para a.para {
-    position: absolute;
-    width: 5em;
-    left: -6em;
-    top: 0;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-    font-weight: normal;
-}
-
-div.para span.backrefs {
-    position: absolute;
-    width: 10em;
-    left: 43em;
-    top: 0;
-    font-variant-numeric: tabular-nums;
-    font-weight: normal;
-}
-
-div.item a.item {
-    font-variant-numeric: tabular-nums;
-}
-
-div.card {
+    display: grid;
+    grid-template-columns: minmax(8em, max-content) 1fr;
+    column-gap: 1em;
+    padding: 0.5em 0;
+    line-height: 1.5em;
     border-top: 1px solid #999999;
     border-bottom: 1px solid #999999;
 }
 
-div.card+div.card {
+div.speck+div.speck {
     border-top: none;
 }
 
-div.card dl {
-    margin: 0.5em 0;
+/* Each root item starts a new card, separated from the previous one by a line. */
+div.item.root:not(:first-child) {
+    margin-top: 0.5em;
+    padding-top: 0.5em;
+    border-top: 1px solid #999999;
 }
 
-div.card dt {
-    margin-top: 0.5em;
+div.item {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+}
+
+div.item div.label {
+    /* The label is indented to show the tree structure. */
+    padding-left: calc(var(--depth) * 1.5em);
     font-weight: bold;
 }
 
-div.card dd {
-    margin: 0;
+div.item a.item {
+    position: absolute;
+    width: 5em;
+    left: -6em;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
 }
 
-div.card ul,
-div.card ol {
-    margin: 0;
-    padding-left: 3em;
+div.item span.backrefs {
+    position: absolute;
+    width: 10em;
+    left: 43em;
+    font-variant-numeric: tabular-nums;
+}
+
+div.item div.text strong {
+    font-weight: normal;
+    text-decoration: underline;
+    text-decoration-color: #999999;
 }
 
 a.anchor {

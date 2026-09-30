@@ -4,11 +4,15 @@ local pikchr = require("pikchr")
 local Context = {}
 Context.__index = Context
 
+local function is_speck(block)
+    return block.t == "Div" and block.classes:includes("SPECK")
+end
+
 function Context:new()
     self = setmetatable({}, Context)
     self.elements = {}
     self.backrefs = {}
-    self.para_count = 0
+    self.item_count = 0
     self.table_count = 0
     self.figure_count = 0
     return self
@@ -43,22 +47,40 @@ function Context:run(doc)
         end,
     }
 
-    -- We only want to collect paragraphs at the top level,
+    -- We only want to collect items at the top level,
     -- not within admonitions, block quotes, etc.
+    local specks = {}
     for i, block in ipairs(doc.blocks) do
-        if block.t == "Para" then
-            doc.blocks[i] = self:collect_paragraph(block)
-        elseif block.t == "Div" and #block.classes == 0 then
-            self:collect_card(block)
+        if is_speck(block) then
+            self:collect_speck(block)
+            specks[i] = true
         end
     end
 
     for i, block in ipairs(doc.blocks) do
-        doc.blocks[i] = block:walk {
-            Cite = function(elem)
-                return self:resolve_references(elem, block)
+        if specks[i] then
+            -- Citations within items, which become the sources of back references.
+            -- Relative references are resolved against the root item of the card,
+            -- which is the closest preceding root row.
+            local root = nil
+            for j, div in ipairs(block.content) do
+                if div.classes:includes("root") then
+                    root = div.identifier
+                end
+                block.content[j] = div:walk {
+                    Cite = function(elem)
+                        return self:resolve_references(elem, root, div)
+                    end
+                }
             end
-        }
+        else
+            -- Citations outside of any item.
+            doc.blocks[i] = block:walk {
+                Cite = function(elem)
+                    return self:resolve_references(elem, nil, nil)
+                end
+            }
+        end
     end
 
     doc = doc:walk {
@@ -121,155 +143,108 @@ function Context:process_div(block)
     end
 end
 
-function Context:collect_paragraph(block)
-    local first = block.content[1]
+function Context:collect_speck(block)
+    local list = block.content[1]
+    if #block.content ~= 1 or list.t ~= "BulletList" then
+        error("SPECK block must contain a single bullet list")
+    end
 
-    -- Extract the paragraph identifier, if any.
-    local para_id = nil
-    if first and first.t == "Str" then
-        para_id = first.text:match("^{#([%w-]+)}$")
-        if para_id then
-            -- Remove the header text.
-            table.remove(block.content, 1)
+    -- Each top-level item and its sub-items form a card. The item tree
+    -- is flattened into a grid of rows, with the depth of each item kept
+    -- only as the indentation of its label. Top-level items are marked
+    -- as roots, so that cards can be separated.
+    local rows = {}
+    self:collect_items(list.content, nil, 0, rows)
 
-            -- Remove blank space at the end of the header line.
-            while #block.content > 0 do
-                local elem = block.content[1]
-                if elem.t == "SoftBreak" or elem.t == "LineBreak" then
-                    table.remove(block.content, 1)
-                else
+    block.classes = pandoc.List { "speck" }
+    block.content = rows
+end
+
+function Context:collect_items(list, prefix, depth, rows)
+    for _, item in ipairs(list) do
+        local first = item[1]
+
+        -- Extract the item identifier, a phrase terminated by a colon.
+        -- The phrase is shown as the label, and joined with underscores
+        -- to form the identifier used in cross-references.
+        local phrase = nil
+        local phrase_len = 0
+        local local_id = nil
+        if first ~= nil and first.t == "Plain" then
+            local words = {}
+            for i, elem in ipairs(first.content) do
+                if elem.t == "Str" and elem.text:match("^[%w.]+:$") then
+                    table.insert(words, elem.text:sub(1, -2))
+                    phrase_len = i
+                    break
+                elseif elem.t == "Str" and elem.text:match("^[%w.]+$") then
+                    table.insert(words, elem.text)
+                elseif elem.t ~= "Space" then
                     break
                 end
             end
-        end
-    end
-
-    self.para_count = self.para_count + 1
-    local para_num = self.para_count
-
-    local div = pandoc.Div({ block })
-    div.classes = pandoc.List { "para" }
-    div.attributes["num"] = tostring(para_num)
-
-    if para_id then
-        div.identifier = para_id
-        self:add_element(div)
-    else
-        div.identifier = string.format("para-%d", para_num)
-    end
-
-    local ref = pandoc.Link({ pandoc.Str(para_num) }, string.format("#%s", div.identifier))
-    ref.classes = pandoc.List { "para" }
-    table.insert(div.content, ref)
-
-    local backrefs = pandoc.Span({})
-    backrefs.identifier = para_id
-    backrefs.classes = pandoc.List { "backrefs" }
-    table.insert(div.content, backrefs)
-
-    return div
-end
-
-function Context:collect_card(block)
-    local definition_list
-    local first_block = block.content[1]
-
-    -- Detect whether there is a definition list.
-    -- Allow card name without any definitions.
-    if first_block == nil then
-        return
-    elseif first_block.t == "DefinitionList" then
-        definition_list = first_block
-    elseif first_block.t == "Para" then
-        definition_list = block.content[2]
-        if definition_list == nil or definition_list.t ~= "DefinitionList" then
-            return
-        end
-        table.remove(block.content, 1)
-        table.insert(definition_list.content, 1, { first_block.content, {} })
-    end
-
-    self.para_count = self.para_count + 1
-    local para_num = self.para_count
-
-    if not block.identifier then
-        block.identifier = string.format("para-%d", para_num)
-    end
-
-    block.classes:insert("card")
-    block.classes:insert("para")
-    block.attributes = { num = tostring(para_num) }
-    self:add_element(block)
-
-    local n = 0
-    for i, definition_item in ipairs(definition_list.content) do
-        if i == 1 then
-            local term = definition_item[1]
-
-            local ref = pandoc.Link({ pandoc.Str(para_num) }, string.format("#%s", block.identifier))
-            ref.classes = pandoc.List { "para" }
-            table.insert(term, ref)
-
-            local backrefs = pandoc.Span({})
-            backrefs.identifier = block.identifier
-            backrefs.classes = pandoc.List { "backrefs" }
-            table.insert(term, backrefs)
-        end
-
-        -- Do not number the first item. It should only contain the
-        -- name and some metadata.
-        if i > 1 or first_block.t == "Para" then
-            local definitions = definition_item[2]
-            for j, definition in ipairs(definitions) do
-                n = n + 1
-
-                local local_id = nil
-                local first = definition[1]
-
-                -- Extract the item identifier, if any.
-                if first ~= nil and first.t == "Plain" then
-                    local elem = first.content[1]
-                    if elem and elem.t == "Str" then
-                        local_id = elem.text:match("^{#([%w-]+)}$")
-                        if local_id then
-                            -- Remove the header text.
-                            table.remove(first.content, 1)
-
-                            -- Remove blank space at the end of the header line.
-                            while #first.content > 0 do
-                                elem = first.content[1]
-                                if elem.t == "SoftBreak" or elem.t == "LineBreak" then
-                                    table.remove(first.content, 1)
-                                else
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-
-                local div = pandoc.Div(definition)
-                div.classes = pandoc.List { "item" }
-                div.attributes = { num = string.format("%d.%d", para_num, n) }
-
-                if local_id ~= nil then
-                    div.identifier = string.format("%s.%s", block.identifier, local_id)
-                    self:add_element(div)
-                else
-                    div.identifier = string.format("%s.%s", block.identifier, n)
-                end
-
-                local ref = pandoc.Link({ pandoc.Str(string.format("%d.", n)) }, "#" .. div.identifier)
-                ref.classes = pandoc.List { "item" }
-                table.insert(div.content, 1, ref)
-
-                local backrefs = pandoc.Span({})
-                backrefs.identifier = div.identifier
-                backrefs.classes = pandoc.List { "backrefs" }
-                table.insert(div.content, backrefs)
-
-                definitions[j] = { div }
+            if phrase_len > 0 then
+                phrase = table.concat(words, " ")
+                local_id = table.concat(words, "_")
             end
+        end
+
+        if first ~= nil and first.t == "Para" then
+            error("Loose list item in " .. (prefix or "SPECK block") .. " (remove the blank lines between items)")
+        elseif local_id == nil then
+            error("List item without identifier in " .. (prefix or "SPECK block"))
+        end
+
+        -- Remove the identifier and the blank space after it.
+        for _ = 1, phrase_len do
+            table.remove(first.content, 1)
+        end
+        while #first.content > 0 do
+            local elem = first.content[1]
+            if elem.t == "Space" or elem.t == "SoftBreak" or elem.t == "LineBreak" then
+                table.remove(first.content, 1)
+            else
+                break
+            end
+        end
+
+        self.item_count = self.item_count + 1
+        local item_num = tostring(self.item_count)
+        local item_id = prefix and string.format("%s.%s", prefix, local_id) or local_id
+
+        local ref = pandoc.Link({ pandoc.Str(item_num) }, "#" .. item_id)
+        ref.classes = pandoc.List { "item" }
+
+        local backrefs = pandoc.Span({})
+        backrefs.identifier = item_id
+        backrefs.classes = pandoc.List { "backrefs" }
+
+        local label = pandoc.Div({ pandoc.Plain({ pandoc.Str(phrase) }) })
+        label.classes = pandoc.List { "label" }
+        label.attributes = { style = string.format("--depth: %d", depth) }
+
+        local text = pandoc.Div({ first })
+        text.classes = pandoc.List { "text" }
+
+        local div = pandoc.Div({ ref, label, text, backrefs })
+        div.identifier = item_id
+        div.classes = pandoc.List { "item" }
+        if depth == 0 then
+            div.classes:insert("root")
+        end
+        div.attributes = { num = item_num }
+        self:add_element(div)
+        table.insert(rows, div)
+
+        -- An item may only contain its text and a list of sub-items.
+        local sublist = item[2]
+        if #item > 2 or (sublist ~= nil and sublist.t ~= "BulletList") then
+            error("Item " .. item_id .. " may only contain a bullet list of sub-items")
+        end
+
+        -- Number the children after their parent.
+        if sublist ~= nil then
+            self:collect_items(sublist.content, item_id, depth + 1, rows)
         end
     end
 end
@@ -313,7 +288,7 @@ function Context:add_element(element)
     end
 end
 
-function Context:resolve_references(cite, block)
+function Context:resolve_references(cite, root, source)
     local result = {}
     local unknown = {}
     local parenthesize = true
@@ -324,10 +299,12 @@ function Context:resolve_references(cite, block)
         end
 
         local element_id
-        local item_id = citation.id:match("^self%.([%w-]+)$")
+        local item_id = citation.id:match("^self%.(.+)$")
 
-        if item_id then
-            element_id = string.format("%s.%s", block.identifier, item_id)
+        if item_id and root == nil then
+            error("Reference outside of a card: " .. citation.id)
+        elseif item_id then
+            element_id = string.format("%s.%s", root, item_id)
         else
             element_id = citation.id
         end
@@ -364,14 +341,7 @@ function Context:resolve_references(cite, block)
                 table.insert(result, pandoc.Space())
                 table.insert(result, link)
             elseif element.t == "Div" then
-                local text
-                if item_id then
-                    local item_num = element.attributes["num"]:sub(#block.attributes["num"] + 2)
-                    text = { pandoc.RawInline("html", "&bull;"), pandoc.Str(item_num) }
-                else
-                    text = { pandoc.Str(element.attributes["num"]) }
-                end
-                local link = pandoc.Link(text, "#" .. element.identifier)
+                local link = pandoc.Link({ pandoc.Str(element.attributes["num"]) }, "#" .. element.identifier)
                 table.insert(result, link)
             else
                 error("Reference to invalid element type: " .. element.t)
@@ -383,22 +353,17 @@ function Context:resolve_references(cite, block)
                 end
             end
 
-            local refs = self.backrefs[element_id]
-            if not refs then
-                refs = {}
-                self.backrefs[element_id] = refs
-            end
+            -- Back references can only point to numbered items.
+            if source ~= nil then
+                local refs = self.backrefs[element_id]
+                if not refs then
+                    refs = {}
+                    self.backrefs[element_id] = refs
+                end
 
-            local ref_num
-            if item_id then
-                ref_num = 0
-            else
-                ref_num = tonumber(block.attributes["num"])
+                local ref_num = tonumber(source.attributes["num"])
                 assert(ref_num ~= nil)
-            end
-
-            if refs[ref_num] == nil then
-                refs[ref_num] = block
+                refs[ref_num] = source.identifier
             end
         end
     end
@@ -439,21 +404,12 @@ function Context:trace_backrefs(span)
     table.sort(ref_nums)
 
     for i, ref_num in ipairs(ref_nums) do
-        local element = refs[ref_num]
-
         if i > 1 then
             table.insert(span.content, pandoc.Str(","))
             table.insert(span.content, pandoc.Space())
         end
 
-        local text
-        if ref_num == 0 then
-            text = pandoc.RawInline("html", "&bull;")
-        else
-            text = pandoc.Str(element.attributes["num"])
-        end
-
-        local link = pandoc.Link(text, string.format("#%s", element.identifier))
+        local link = pandoc.Link({ pandoc.Str(tostring(ref_num)) }, "#" .. refs[ref_num])
         table.insert(span.content, link)
     end
 
