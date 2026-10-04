@@ -5,5 +5,5 @@ metadata:
 input-files:
 - ${.}/project.md
 - ${.}/environment.md
-- ${.}/goals.md
-- ${.}/system.md
+- ${.}/concept.md
+- ${.}/requirements.md

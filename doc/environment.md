@@ -1,7 +1,4 @@
-# Environment
-
-## Glossary
-Does this work [@Use_case_2.Outline].
+# Operational environment
 
 ## Components
 
@@ -28,13 +25,13 @@ Vestibulum ullamcorper rhoncus nisi, a volutpat risus tincidunt sed.
 :::
 
 ## Constraints
-See [@Use_case_1.Extensions].
+
+- VS Code support.
+  - Devcontainer.
+- GitHub.
+- Deploy as a folder to a simple webserver.
+
 
 ## Assumptions
-==TBD==
 
-## Effects
-==TBD==
-
-## Invariants
-==TBD==
+- Users know Markdown and GitHub.
