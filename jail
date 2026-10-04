@@ -1,23 +1,41 @@
-#!/bin/sh -e
+#!/bin/bash -e
 
-# Prepare a Docker image identical to the one used by VS Code.
-# The build cache should ensure that actually building it won't
-# usually be required.
-docker build \
-    --tag maptiler/speck:jail \
-    --file .devcontainer/Dockerfile \
-    --target jail \
-    .devcontainer
+case "$1" in
+    build)
+        # Prepare a Docker image identical to the one used by VS Code.
+        # The build cache should ensure that actually building it won't
+        # usually be required.
+        docker build \
+            --tag maptiler/speck:jail \
+            --file .devcontainer/Dockerfile \
+            --target jail \
+            .devcontainer
 
-exec docker run \
-    --rm \
-    --interactive \
-    --tty \
-    --user debian \
-    --volume "${HOME}/.claude.json":/home/debian/.claude.json \
-    --volume "${HOME}/.claude/.credentials.json":/home/debian/.claude/.credentials.json \
-    --volume "$(pwd)":/workspaces/speck \
-    --workdir /workspaces/speck \
-    --hostname speck-jail \
-    maptiler/speck:jail \
-    bash
+        # Remove pre-existing container.
+        docker rm -vf speck-jail
+
+        # Prepare a Docker container that can be entered repeatedly.
+        # This will persist Claude session history as long as the
+        # container exists.
+        docker create \
+            --interactive \
+            --tty \
+            --user debian \
+            --volume "${HOME}/.claude.json":/home/debian/.claude.json \
+            --volume "${HOME}/.claude/.credentials.json":/home/debian/.claude/.credentials.json \
+            --volume "$(pwd)":/workspaces/speck \
+            --workdir /workspaces/speck \
+            --hostname speck-jail \
+            --name speck-jail \
+            maptiler/speck:jail \
+            bash
+        ;;
+
+    enter)
+        exec docker start --interactive speck-jail
+        ;;
+
+    *)
+        echo "Invalid command: $1"
+        exit 1
+esac
