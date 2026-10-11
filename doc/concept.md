@@ -32,6 +32,7 @@ TBD
 
 - Plain text documents
   - Review on GitHub?
+  - Split text between files.
 - Versioning
 - Diagrams
 - Tables
@@ -41,4 +42,16 @@ TBD
   - Permalink in Jira
   - Permalink in code
   - Over a call
-- Distinguish named concepts in text (underline).
+    - Add numbers to all paragraphs?
+- Concept of a document?
+- Concept of a project?
+  - References between projects?
+- External references.
+  - Per document or global?
+  - Figma?
+- Distinguish named concepts in text (underline)?
+
+<!-- XXX Where should this go? -->
+# Project requirements
+
+- Simple to develop.

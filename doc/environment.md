@@ -31,7 +31,6 @@ Vestibulum ullamcorper rhoncus nisi, a volutpat risus tincidunt sed.
 - GitHub.
 - Deploy as a folder to a simple webserver.
 
-
 ## Assumptions
 
 - Users know Markdown and GitHub.
