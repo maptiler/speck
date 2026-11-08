@@ -1,0 +1,112 @@
+{
+    "name": "pikchr",
+    "displayName": "Pikchr",
+    "description": "Syntax highlighting, live preview and error checking for Pikchr diagrams, using the same Pikchr build as SPECK.",
+    "version": "0.1.0",
+    "publisher": "maptiler",
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/maptiler/speck.git",
+        "directory": "vscode-pikchr"
+    },
+    "engines": {
+        "vscode": "^1.100.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Visualization"
+    ],
+    "main": "./dist/extension.js",
+    "activationEvents": [
+        "onLanguage:pikchr",
+        "onWebviewPanel:pikchr.preview"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "pikchr",
+                "aliases": [
+                    "Pikchr",
+                    "pikchr"
+                ],
+                "extensions": [
+                    ".pikchr"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "pikchr",
+                "scopeName": "source.pikchr",
+                "path": "./syntaxes/pikchr.tmLanguage.json"
+            }
+        ],
+        "commands": [
+            {
+                "command": "pikchr.showPreview",
+                "title": "Open Preview",
+                "category": "Pikchr",
+                "icon": "$(open-preview)"
+            },
+            {
+                "command": "pikchr.showPreviewToSide",
+                "title": "Open Preview to the Side",
+                "category": "Pikchr",
+                "icon": "$(open-preview)"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "pikchr.showPreview",
+                    "when": "editorLangId == pikchr"
+                },
+                {
+                    "command": "pikchr.showPreviewToSide",
+                    "when": "editorLangId == pikchr"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "pikchr.showPreviewToSide",
+                    "alt": "pikchr.showPreview",
+                    "when": "editorLangId == pikchr",
+                    "group": "navigation"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "pikchr.showPreview",
+                    "when": "resourceLangId == pikchr",
+                    "group": "navigation"
+                }
+            ]
+        },
+        "keybindings": [
+            {
+                "command": "pikchr.showPreview",
+                "key": "ctrl+shift+v",
+                "mac": "cmd+shift+v",
+                "when": "editorLangId == pikchr"
+            },
+            {
+                "command": "pikchr.showPreviewToSide",
+                "key": "ctrl+k v",
+                "mac": "cmd+k v",
+                "when": "editorLangId == pikchr"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "make all"
+    },
+    "devDependencies": {
+        "@types/node": "^20.19.0",
+        "@types/vscode": "~1.100.0",
+        "@vscode/vsce": "^4.1.0",
+        "esbuild": "^0.28.2",
+        "typescript": "^7.0.2"
+    }
+}

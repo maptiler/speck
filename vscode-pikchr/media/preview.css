@@ -1,0 +1,44 @@
+/* The preview shows diagrams as they appear in SPECK documents (see `src/speck.css`),
+   regardless of the VS Code color theme. */
+
+html,
+body {
+    background-color: #fafafa;
+    color: #333333;
+}
+
+body {
+    margin: 0;
+    padding: 1.5em;
+}
+
+svg.pikchr {
+    font-family: "Inter", sans-serif;
+}
+
+/* Center the diagram. When it is wider than the panel, it starts at the left edge
+   and the panel scrolls, rather than being cut off on both sides. */
+#diagram {
+    width: max-content;
+    margin: 0 auto;
+}
+
+#diagram svg {
+    display: block;
+}
+
+/* The last valid diagram is kept while the source has an error. */
+#diagram.stale {
+    opacity: 0.3;
+}
+
+#error {
+    margin: 0 0 1.5em;
+    padding: 0.75em 1em;
+    overflow-x: auto;
+    border-left: 4px solid #c00000;
+    background-color: #fbeaea;
+    color: #333333;
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: var(--vscode-editor-font-size, 13px);
+}

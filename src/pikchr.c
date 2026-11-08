@@ -8357,12 +8357,13 @@ static int
 lua_pikchr_compile(lua_State *L)
 {
     const char *code = luaL_checkstring(L, 1);
+    const char *class = luaL_optstring(L, 2, NULL);
 
     int width;
     int height;
     char *out;
 
-    out = pikchr(code, "", PIKCHR_PLAINTEXT_ERRORS, &width, &height);
+    out = pikchr(code, class, PIKCHR_PLAINTEXT_ERRORS, &width, &height);
 
     if (out == NULL) {
         lua_pushstring(L, "could not allocate memory");

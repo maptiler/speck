@@ -1,0 +1,165 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Pikchr",
+    "scopeName": "source.pikchr",
+    "comment": "Keywords are taken from the tokenizer and keyword tables in src/pikchr.c.",
+    "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#define" },
+        { "include": "#labels" },
+        { "include": "#numbers" },
+        { "include": "#operators" },
+        { "include": "#properties" },
+        { "include": "#statements" },
+        { "include": "#classes" },
+        { "include": "#attributes" },
+        { "include": "#keywords" },
+        { "include": "#builtin-variables" },
+        { "include": "#functions" },
+        { "include": "#colors" },
+        { "include": "#places" },
+        { "include": "#variables" },
+        { "include": "#macro-calls" },
+        { "include": "#punctuation" }
+    ],
+    "repository": {
+        "comments": {
+            "patterns": [
+                {
+                    "name": "comment.block.pikchr",
+                    "begin": "/\\*",
+                    "end": "\\*/",
+                    "captures": { "0": { "name": "punctuation.definition.comment.pikchr" } }
+                },
+                {
+                    "name": "comment.line.double-slash.pikchr",
+                    "match": "(//).*$",
+                    "captures": { "1": { "name": "punctuation.definition.comment.pikchr" } }
+                },
+                {
+                    "name": "comment.line.number-sign.pikchr",
+                    "match": "(#).*$",
+                    "captures": { "1": { "name": "punctuation.definition.comment.pikchr" } }
+                }
+            ]
+        },
+        "strings": {
+            "name": "string.quoted.double.pikchr",
+            "begin": "\"",
+            "end": "\"",
+            "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.pikchr" } },
+            "endCaptures": { "0": { "name": "punctuation.definition.string.end.pikchr" } },
+            "patterns": [{ "name": "constant.character.escape.pikchr", "match": "\\\\." }]
+        },
+        "define": {
+            "comment": "Macro definition: define name { body }",
+            "match": "\\b(define)\\s+([A-Za-z_$@][A-Za-z0-9_]*)",
+            "captures": {
+                "1": { "name": "keyword.control.define.pikchr" },
+                "2": { "name": "entity.name.function.macro.pikchr" }
+            }
+        },
+        "labels": {
+            "comment": "Place name definition: Label: box",
+            "match": "\\b([A-Z][A-Za-z0-9_]*)\\s*(:)",
+            "captures": {
+                "1": { "name": "entity.name.label.pikchr" },
+                "2": { "name": "punctuation.separator.label.pikchr" }
+            }
+        },
+        "numbers": {
+            "patterns": [
+                { "name": "constant.numeric.hex.pikchr", "match": "\\b0[xX][0-9A-Fa-f]+\\b" },
+                { "name": "constant.numeric.ordinal.pikchr", "match": "\\b[0-9]+(?:st|nd|rd|th)\\b" },
+                {
+                    "match": "(?<![A-Za-z0-9_.])((?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][-+]?[0-9]+)?)(in|cm|mm|pt|px|pc|%)?",
+                    "captures": {
+                        "1": { "name": "constant.numeric.decimal.pikchr" },
+                        "2": { "name": "keyword.other.unit.pikchr" }
+                    }
+                }
+            ]
+        },
+        "operators": {
+            "patterns": [
+                {
+                    "name": "keyword.operator.arrow.pikchr",
+                    "match": "<->|->|<-|\u2190|\u2192|\u2194|&(?:rarr|rightarrow|larr|leftarrow|leftrightarrow);"
+                },
+                { "name": "keyword.operator.comparison.pikchr", "match": "==" },
+                { "name": "keyword.operator.assignment.pikchr", "match": "[-+*/]?=" },
+                { "name": "keyword.operator.arithmetic.pikchr", "match": "[-+*/%<>]" }
+            ]
+        },
+        "properties": {
+            "comment": "Points and properties of objects: B.ne, B.x, B.wid",
+            "patterns": [
+                {
+                    "match": "(\\.)(n|ne|e|se|s|sw|w|nw|north|south|east|west|c|center|t|top|bot|bottom|left|right|start|end)\\b",
+                    "captures": {
+                        "1": { "name": "punctuation.accessor.pikchr" },
+                        "2": { "name": "support.constant.edge.pikchr" }
+                    }
+                },
+                {
+                    "match": "(\\.)(x|y|width|wid|height|ht|radius|rad|diameter|thickness|color|fill)\\b",
+                    "captures": {
+                        "1": { "name": "punctuation.accessor.pikchr" },
+                        "2": { "name": "variable.other.property.pikchr" }
+                    }
+                }
+            ]
+        },
+        "statements": {
+            "name": "keyword.control.pikchr",
+            "match": "\\b(?:assert|print)\\b"
+        },
+        "classes": {
+            "name": "entity.name.type.pikchr",
+            "match": "\\b(?:arc|arrow|box|circle|cylinder|diamond|dot|ellipse|file|line|move|oval|spline|text)\\b"
+        },
+        "attributes": {
+            "name": "support.type.property-name.pikchr",
+            "match": "\\b(?:width|wid|height|ht|radius|rad|diameter|thickness|color|fill)\\b"
+        },
+        "keywords": {
+            "name": "keyword.other.pikchr",
+            "match": "\\b(?:above|aligned|and|as|at|behind|below|between|big|bold|bot|bottom|ccw|center|chop|close|cw|dashed|dotted|down|east|end|even|first|fit|from|go|heading|in|invis|invisible|italic|last|left|ljust|mono|monospace|north|of|previous|right|rjust|same|small|solid|south|start|the|then|thick|thin|this|to|top|until|up|vertex|way|west|with)\\b"
+        },
+        "builtin-variables": {
+            "name": "variable.language.pikchr",
+            "match": "\\b(?:arcrad|arrowhead|arrowht|arrowwid|boxht|boxrad|boxwid|charht|charwid|circlerad|cylht|cylrad|cylwid|dashwid|diamondht|diamondwid|dotrad|ellipseht|ellipsewid|fileht|filerad|filewid|lineht|linewid|movewid|ovalht|ovalwid|scale|textht|textwid|margin|leftmargin|rightmargin|topmargin|bottommargin|fontscale|layer)\\b"
+        },
+        "functions": {
+            "name": "support.function.pikchr",
+            "match": "\\b(?:abs|cos|dist|int|max|min|sin|sqrt)(?=\\s*\\()"
+        },
+        "colors": {
+            "name": "support.constant.color.pikchr",
+            "match": "(?i)\\b(?:AliceBlue|AntiqueWhite|Aqua|Aquamarine|Azure|Beige|Bisque|Black|BlanchedAlmond|Blue|BlueViolet|Brown|BurlyWood|CadetBlue|Chartreuse|Chocolate|Coral|CornflowerBlue|Cornsilk|Crimson|Cyan|DarkBlue|DarkCyan|DarkGoldenrod|DarkGray|DarkGreen|DarkGrey|DarkKhaki|DarkMagenta|DarkOliveGreen|DarkOrange|DarkOrchid|DarkRed|DarkSalmon|DarkSeaGreen|DarkSlateBlue|DarkSlateGray|DarkSlateGrey|DarkTurquoise|DarkViolet|DeepPink|DeepSkyBlue|DimGray|DimGrey|DodgerBlue|Firebrick|FloralWhite|ForestGreen|Fuchsia|Gainsboro|GhostWhite|Gold|Goldenrod|Gray|Green|GreenYellow|Grey|Honeydew|HotPink|IndianRed|Indigo|Ivory|Khaki|Lavender|LavenderBlush|LawnGreen|LemonChiffon|LightBlue|LightCoral|LightCyan|LightGoldenrodYellow|LightGray|LightGreen|LightGrey|LightPink|LightSalmon|LightSeaGreen|LightSkyBlue|LightSlateGray|LightSlateGrey|LightSteelBlue|LightYellow|Lime|LimeGreen|Linen|Magenta|Maroon|MediumAquamarine|MediumBlue|MediumOrchid|MediumPurple|MediumSeaGreen|MediumSlateBlue|MediumSpringGreen|MediumTurquoise|MediumVioletRed|MidnightBlue|MintCream|MistyRose|Moccasin|NavajoWhite|Navy|None|Off|OldLace|Olive|OliveDrab|Orange|OrangeRed|Orchid|PaleGoldenrod|PaleGreen|PaleTurquoise|PaleVioletRed|PapayaWhip|PeachPuff|Peru|Pink|Plum|PowderBlue|Purple|RebeccaPurple|Red|RosyBrown|RoyalBlue|SaddleBrown|Salmon|SandyBrown|SeaGreen|Seashell|Sienna|Silver|SkyBlue|SlateBlue|SlateGray|SlateGrey|Snow|SpringGreen|SteelBlue|Tan|Teal|Thistle|Tomato|Turquoise|Violet|Wheat|White|WhiteSmoke|Yellow|YellowGreen)\\b"
+        },
+        "places": {
+            "comment": "References to place names (they start with an uppercase letter)",
+            "name": "variable.other.constant.pikchr",
+            "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
+        },
+        "variables": {
+            "patterns": [
+                { "name": "variable.parameter.pikchr", "match": "\\$[1-9](?![0-9])" },
+                { "name": "variable.other.pikchr", "match": "[$@][A-Za-z0-9_]*" }
+            ]
+        },
+        "macro-calls": {
+            "name": "entity.name.function.macro.pikchr",
+            "match": "\\b[a-z_][A-Za-z0-9_]*(?=\\s*\\()"
+        },
+        "punctuation": {
+            "patterns": [
+                { "name": "punctuation.terminator.statement.pikchr", "match": ";" },
+                { "name": "punctuation.separator.comma.pikchr", "match": "," },
+                { "name": "punctuation.separator.continuation.pikchr", "match": "\\\\$" }
+            ]
+        }
+    }
+}

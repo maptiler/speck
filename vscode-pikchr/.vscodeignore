@@ -1,0 +1,20 @@
+# Files excluded from the .vsix package built by `make package` (vsce).
+#
+# Without this file, vsce packages everything in this directory except
+# node_modules/, including sources and intermediate build outputs that the
+# installed extension never uses. The extension only needs dist/extension.js
+# (which already bundles the TypeScript sources and the WebAssembly module
+# from build/), media/, syntaxes/, language-configuration.json, package.json
+# and README.md.
+#
+# Check the package contents with `node_modules/.bin/vsce ls --no-dependencies`.
+
+build/**
+node_modules/**
+src/**
+dist/**/*.map
+.gitignore
+example.pikchr
+Makefile
+tsconfig.json
+*.vsix

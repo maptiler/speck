@@ -1,4 +1,4 @@
-name: Publish Docker image
+name: Publish release
 
 on:
   release:
@@ -26,3 +26,57 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: "maptiler/speck:latest,maptiler/speck:${{ github.event.release.tag_name }}"
+
+  build_extension:
+    name: Build VS Code extension
+    runs-on: ubuntu-latest
+    # Same distribution as the devcontainer, for the same Emscripten and Node.js versions.
+    container: debian:forky
+    steps:
+      - name: Install dependencies
+        run: |
+          apt update --quiet
+          apt install --quiet --yes --no-install-recommends \
+              ca-certificates emscripten git make nodejs npm
+
+      - name: Check out
+        uses: actions/checkout@v6
+
+      # Extension versions must have three components, release tags are like v1.6.
+      - name: Set version from release tag
+        working-directory: vscode-pikchr
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: npm version "${TAG#v}.0" --no-git-tag-version
+
+      - name: Build extension
+        working-directory: vscode-pikchr
+        run: |
+          npm ci
+          make package
+
+      - name: Store extension
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-pikchr
+          path: vscode-pikchr/*.vsix
+          if-no-files-found: error
+
+  upload_extension:
+    name: Attach VS Code extension to release
+    needs: build_extension
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Retrieve extension
+        uses: actions/download-artifact@v8
+        with:
+          name: vscode-pikchr
+
+      - name: Upload release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: gh release upload "$TAG" *.vsix --repo "$REPO" --clobber

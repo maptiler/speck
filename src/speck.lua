@@ -16,9 +16,9 @@ end
 
 function Context:run(doc)
     doc = doc:walk {
-        CodeBlock = function(block)
-            if block.classes:includes("pic") then
-                return self:process_pic(block)
+        Image = function(image)
+            if image.src:match("%.pikchr$") then
+                return self:process_pikchr(image)
             end
         end,
         Table = function(block)
@@ -72,24 +72,13 @@ function Context:run(doc)
     return doc
 end
 
-function Context:process_pic(block)
-    local svg = pikchr.compile(block.text)
-    local figure = pandoc.Figure({ pandoc.RawInline("html", svg) })
-
-    if block.identifier then
-        figure.identifier = block.identifier
-    end
-
-    if block.classes:includes("wide") then
-        table.insert(figure.classes, "wide")
-    end
-
-    local caption = block.attributes["caption"]
-    if caption then
-        figure.caption = pandoc.Caption({ caption })
-    end
-
-    return figure
+function Context:process_pikchr(image)
+    -- The diagram is inlined rather than linked, so that it can use
+    -- the styles and web fonts of the page. The `pikchr` CSS class
+    -- can be used to further style the diagram.
+    local _, pic = pandoc.mediabag.fetch(image.src)
+    local svg = pikchr.compile(pic, "pikchr")
+    return pandoc.RawInline("html", svg)
 end
 
 function Context:process_table(block)
@@ -278,7 +267,7 @@ function Context:collect_table(block)
     self.table_count = self.table_count + 1
     local table_num = self.table_count
 
-    if block.identifier then
+    if block.identifier ~= "" then
         self:add_element(block)
     else
         block.identifier = string.format("tab-%d", table_num)
@@ -293,7 +282,7 @@ function Context:collect_figure(block)
     self.figure_count = self.figure_count + 1
     local figure_num = self.figure_count
 
-    if block.identifier then
+    if block.identifier ~= "" then
         self:add_element(block)
     else
         block.identifier = string.format("fig-%d", figure_num)

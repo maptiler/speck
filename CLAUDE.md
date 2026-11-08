@@ -5,6 +5,10 @@ It is implemented as a Lua filter for Pandoc, with a small wrapper shell script,
 The source code is in the `src/` directory.
 This repository also defines a GitHub action in `action.yml`.
 
+The `vscode-pikchr/` directory contains a VS Code extension for `.pikchr` files (syntax highlighting, live preview, error diagnostics).
+It compiles `src/pikchr.c` to WebAssembly with Emscripten, so changes to `src/pikchr.c` affect both SPECK and the extension.
+Build it with `make` in that directory (after `npm install`), package it with `make package`.
+
 # Environment
 
 You are inside a Docker devcontainer.

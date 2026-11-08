@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Pikchr extension",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/vscode-pikchr"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/vscode-pikchr/dist/**/*.js"
+            ],
+            "preLaunchTask": "Build Pikchr extension"
+        }
+    ]
+}

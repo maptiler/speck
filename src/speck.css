@@ -25,18 +25,22 @@ img {
     max-width: 100%;
 }
 
-svg {
-    height: auto;
-}
-
 figure {
     margin: 1em 0;
     text-align: center;
 }
 
+/* Show figures at their intrinsic size and center them on the page,
+   even when they are wider than the text and overflow it on both sides.
+   `text-align: center` cannot do that, it lets content wider than its
+   container overflow only to the right. */
 figure img,
 figure svg {
     padding: 1.5em 0;
+    display: block;
+    max-width: none;
+    margin-left: 50%;
+    transform: translateX(-50%);
 }
 
 h1,
@@ -304,13 +308,6 @@ h6:hover .anchor,
 table caption:hover .anchor,
 figcaption:hover .anchor {
     opacity: 1;
-}
-
-.wide {
-    position: relative;
-    width: 60em;
-    left: 50%;
-    transform: translateX(-50%);
 }
 
 .admonition {

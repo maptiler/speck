@@ -2,13 +2,18 @@
 FROM debian:forky
 
 # Install dependencies.
+# The Claude Code devcontainer feature installs Claude Code with npm, so it needs
+# both nodejs and npm (Debian packages them separately).
 RUN apt update --quiet \
  && apt install --quiet --yes --no-install-recommends \
         build-essential \
         ca-certificates \
         curl \
+        emscripten \
         git \
         liblua5.4-dev \
+        nodejs \
+        npm \
         pandoc \
         pkg-config
 
